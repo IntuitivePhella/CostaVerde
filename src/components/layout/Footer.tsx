@@ -99,12 +99,12 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-12 pt-8 border-t border-gray-800">
+        <div className="mt-4 pt-1 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-400">
               © 2024 Costa Verde Barcos. Todos os direitos reservados.
             </p>
-            <div className="mt-4 md:mt-0">
+            <div className="mt-2 md:mt-0">
               <p className="text-sm text-gray-400">
                 Atendimento: +55 (24) 99999-9999 | contato@costaverde.com.br
               </p>

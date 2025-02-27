@@ -1,9 +1,12 @@
-import { type Config } from "tailwindcss"
-import { fontFamily } from "tailwindcss/defaultTheme"
-
-export default {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   darkMode: ["class"],
-  content: ["./src/**/*.{ts,tsx}"],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
   theme: {
     container: {
       center: true,
@@ -61,7 +64,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
+        sans: ["var(--font-sans)"],
       },
       keyframes: {
         "accordion-down": {
@@ -80,4 +83,4 @@ export default {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+} 
