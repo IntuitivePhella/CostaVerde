@@ -2,44 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/types/supabase';
-import { useAuth } from '@/contexts/AuthContext';
+import type { BoatSummary } from '@/types/boat';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
-type Boat = Database['public']['Tables']['boats']['Row'];
+import { Search } from 'lucide-react';
+import { BoatCard } from '@/components/boats/BoatCard';
+import { BoatFilters } from '@/components/boats/BoatFilters';
 
 export default function BoatsPage() {
-  const [boats, setBoats] = useState<Boat[]>([]);
+  const [boats, setBoats] = useState<BoatSummary[]>([]);
   const [error, setError] = useState('');
-  const { user } = useAuth();
-  const router = useRouter();
-  const supabase = createClientComponentClient<Database>();
+  const [search, setSearch] = useState('');
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const fetchBoats = async () => {
       try {
         const { data, error } = await supabase
           .from('boats')
-          .select('*')
-          .eq('owner_id', user?.id)
+          .select('id, name, boat_type, capacity, daily_rate, location, gallery_urls, status')
+          .eq('status', 'active')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -50,39 +34,35 @@ export default function BoatsPage() {
     };
 
     fetchBoats();
-  }, [supabase, user?.id]);
+  }, [supabase]);
 
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('boats')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setBoats(boats.filter(boat => boat.id !== id));
-    } catch (error) {
-      setError('Erro ao excluir embarcação.');
-    }
-  };
+  const filteredBoats = boats.filter(boat =>
+    boat.name.toLowerCase().includes(search.toLowerCase()) ||
+    boat.boat_type.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container py-8 space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Embarcações</h2>
+          <h1 className="text-3xl font-bold tracking-tight">Encontre seu Barco</h1>
           <p className="text-muted-foreground">
-            Gerencie suas embarcações cadastradas
+            Explore nossa seleção de embarcações disponíveis para aluguel
           </p>
         </div>
-
-        <Button asChild>
-          <Link href="/barcos/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Embarcação
-          </Link>
-        </Button>
+        
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 md:w-64">
+            <Input
+              type="search"
+              placeholder="Buscar embarcações..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8"
+            />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -91,84 +71,22 @@ export default function BoatsPage() {
         </Alert>
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Capacidade</TableHead>
-              <TableHead>Preço (dia)</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {boats.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground h-24"
-                >
-                  Nenhuma embarcação cadastrada
-                </TableCell>
-              </TableRow>
-            ) : (
-              boats.map((boat) => (
-                <TableRow key={boat.id}>
-                  <TableCell className="font-medium">{boat.name}</TableCell>
-                  <TableCell>{boat.type}</TableCell>
-                  <TableCell>{boat.capacity} pessoas</TableCell>
-                  <TableCell>
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(boat.price_per_day)}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                        boat.is_active
-                          ? 'bg-green-50 text-green-700'
-                          : 'bg-red-50 text-red-700'
-                      }`}
-                    >
-                      {boat.is_active ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                        >
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/barcos/${boat.id}/editar`)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => handleDelete(boat.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="grid gap-6">
+        <BoatFilters />
+        
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredBoats.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground">
+                Nenhuma embarcação encontrada
+              </p>
+            </div>
+          ) : (
+            filteredBoats.map((boat) => (
+              <BoatCard key={boat.id} boat={boat} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

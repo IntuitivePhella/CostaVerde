@@ -14,14 +14,14 @@ export function formatDate(date: string | Date) {
   return format(date, "PPP", { locale: ptBR })
 }
 
-export function formatCurrency(value: number) {
+export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(value)
 }
 
-export function formatPhoneNumber(phone: string) {
+export function formatPhoneNumber(phone: string): string {
   const cleaned = phone.replace(/\D/g, "")
   const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/)
   if (match) {
@@ -54,7 +54,7 @@ export function isValidCPF(cpf: string) {
   return true
 }
 
-export function isValidEmail(email: string) {
+export function isValidEmail(email: string): boolean {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return regex.test(email)
 }
@@ -68,7 +68,7 @@ export function getInitials(name: string) {
     .slice(0, 2)
 }
 
-export function slugify(text: string) {
+export function slugify(text: string): string {
   return text
     .toString()
     .normalize("NFD")
@@ -78,4 +78,33 @@ export function slugify(text: string) {
     .replace(/\s+/g, "-")
     .replace(/[^\w-]+/g, "")
     .replace(/--+/g, "-")
+}
+
+export function formatDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+export function calculateDaysBetween(startDate: Date, endDate: Date): number {
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text
+  return text.slice(0, maxLength) + '...'
+}
+
+export function generateRandomString(length: number): string {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length))
+  }
+  return result
 } 

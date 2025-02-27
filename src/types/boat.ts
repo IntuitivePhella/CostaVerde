@@ -51,14 +51,20 @@ export const BOAT_STATUS = [
   { value: 'maintenance', label: 'Em Manutenção' },
 ] as const;
 
-export type BoatSummary = Pick<
-  Boat,
-  | 'id'
-  | 'name'
-  | 'boat_type'
-  | 'capacity'
-  | 'daily_rate'
-  | 'location'
-  | 'gallery_urls'
-  | 'status'
->; 
+export interface BoatSummary {
+  id: string
+  name: string
+  description: string
+  daily_rate: number
+  capacity: number
+  location: string
+  images: string[]
+  specifications: {
+    length: number
+    year: number
+    manufacturer: string
+    model: string
+  }
+  rating?: number
+  reviews_count?: number
+} 

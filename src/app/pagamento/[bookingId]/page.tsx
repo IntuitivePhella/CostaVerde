@@ -66,8 +66,15 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
   const paymentDetails = {
     booking,
     payment: {
+      id: existingPayment?.id || '',
+      booking_id: booking.id,
+      amount: booking.preco_total,
+      currency: 'BRL',
+      status: 'pending' as const,
       stripe_payment_intent_id: paymentIntent.id,
       stripe_client_secret: paymentIntent.client_secret,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
   };
 

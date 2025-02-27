@@ -12,25 +12,33 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession()
 
   // Rotas que requerem autenticação
-  const protectedRoutes = ['/dashboard', '/perfil', '/barcos']
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  const authRoutes = ['/profile', '/bookings', '/messages']
 
-  // Rotas de autenticação
-  const authRoutes = ['/login', '/register']
-  const isAuthRoute = authRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  // Rotas que requerem permissões de admin
+  const adminRoutes = ['/admin']
 
-  // Redireciona usuários não autenticados para login
-  if (isProtectedRoute && !session) {
+  const path = request.nextUrl.pathname
+
+  // Redirecionar para login se não estiver autenticado em rotas protegidas
+  if (authRoutes.some((route) => path.startsWith(route)) && !session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redireciona usuários autenticados para dashboard se tentarem acessar rotas de auth
-  if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Verificar permissões de admin para rotas administrativas
+  if (adminRoutes.some((route) => path.startsWith(route))) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
   }
 
   return res
@@ -39,11 +47,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
+     * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - public (public files)
      */
     '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],

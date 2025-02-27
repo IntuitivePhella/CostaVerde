@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['storage.googleapis.com', 'lh3.googleusercontent.com'],
+    domains: ['localhost'],
   },
   headers: async () => {
     return [

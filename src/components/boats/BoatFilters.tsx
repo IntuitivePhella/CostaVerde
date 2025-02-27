@@ -1,18 +1,5 @@
-import { useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -20,205 +7,91 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TIPOS_BARCO } from '@/types/boat';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Filter } from 'lucide-react';
 
-const filterSchema = z.object({
-  tipo: z.string().optional(),
-  cidade: z.string().optional(),
-  estado: z.string().optional(),
-  capacidade_min: z.coerce.number().min(1).optional(),
-  preco_max: z.coerce.number().min(0).optional(),
-  ordenar_por: z.enum(['preco_asc', 'preco_desc', 'mais_recentes']).optional(),
-});
+const BOAT_TYPES = [
+  { value: 'lancha', label: 'Lancha' },
+  { value: 'veleiro', label: 'Veleiro' },
+  { value: 'iate', label: 'Iate' },
+  { value: 'catamaras', label: 'Catamarã' },
+  { value: 'jetski', label: 'Jet Ski' },
+];
 
-type FilterValues = z.infer<typeof filterSchema>;
-
-export const BoatFilters = () => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const form = useForm<FilterValues>({
-    resolver: zodResolver(filterSchema),
-    defaultValues: {
-      tipo: searchParams.get('tipo') || undefined,
-      cidade: searchParams.get('cidade') || undefined,
-      estado: searchParams.get('estado') || undefined,
-      capacidade_min: searchParams.get('capacidade_min')
-        ? parseInt(searchParams.get('capacidade_min')!)
-        : undefined,
-      preco_max: searchParams.get('preco_max')
-        ? parseInt(searchParams.get('preco_max')!)
-        : undefined,
-      ordenar_por: (searchParams.get('ordenar_por') as FilterValues['ordenar_por']) || 'mais_recentes',
-    },
-  });
-
-  const createQueryString = useCallback(
-    (values: FilterValues) => {
-      const params = new URLSearchParams(searchParams);
-      Object.entries(values).forEach(([key, value]) => {
-        if (value) {
-          params.set(key, value.toString());
-        } else {
-          params.delete(key);
-        }
-      });
-      return params.toString();
-    },
-    [searchParams]
-  );
-
-  const onSubmit = (values: FilterValues) => {
-    const queryString = createQueryString(values);
-    router.push(pathname + '?' + queryString);
-  };
-
-  const handleReset = () => {
-    form.reset();
-    router.push(pathname);
-  };
+export function BoatFilters() {
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [capacity, setCapacity] = useState('');
+  const [type, setType] = useState('all');
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="tipo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Embarcação</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os tipos" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {TIPOS_BARCO.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        {tipo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
+    <div className="rounded-lg border bg-card p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Filter className="h-5 w-5" />
+        <h2 className="text-lg font-semibold">Filtros</h2>
+      </div>
 
-          <FormField
-            control={form.control}
-            name="cidade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cidade</FormLabel>
-                <FormControl>
-                  <Input placeholder="Digite a cidade" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label>Tipo de Embarcação</Label>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {BOAT_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <FormField
-            control={form.control}
-            name="estado"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="UF"
-                    maxLength={2}
-                    {...field}
-                    className="uppercase"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+        <div className="space-y-2">
+          <Label>Faixa de Preço (por dia)</Label>
+          <div className="pt-2">
+            <Slider
+              value={priceRange}
+              onValueChange={setPriceRange}
+              max={5000}
+              step={100}
+              className="mb-2"
+            />
+            <div className="flex items-center justify-between text-sm">
+              <span>
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(priceRange[0])}
+              </span>
+              <span>
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(priceRange[1])}
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <FormField
-            control={form.control}
-            name="capacidade_min"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Capacidade Mínima</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="Número de pessoas"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="preco_max"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço Máximo por Dia</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="R$ 0,00"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="ordenar_por"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ordenar Por</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Mais recentes" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="mais_recentes">Mais recentes</SelectItem>
-                    <SelectItem value="preco_asc">Menor preço</SelectItem>
-                    <SelectItem value="preco_desc">Maior preço</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
+        <div className="space-y-2">
+          <Label>Capacidade Mínima</Label>
+          <Input
+            type="number"
+            placeholder="Número de pessoas"
+            value={capacity}
+            onChange={(e) => setCapacity(e.target.value)}
+            min={1}
           />
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button
-            type="submit"
-            className="bg-[#00adef] hover:bg-[#1322ad] text-white"
-          >
-            Aplicar Filtros
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReset}
-          >
-            Limpar Filtros
-          </Button>
-        </div>
-      </form>
-    </Form>
+        <Button className="w-full" variant="outline">
+          Aplicar Filtros
+        </Button>
+      </div>
+    </div>
   );
-}; 
+} 

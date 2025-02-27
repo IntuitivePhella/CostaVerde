@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, MessageSquare, Star, TrendingUp } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface ReviewStatsProps {
   boatId: string;
@@ -106,8 +108,18 @@ export const ReviewStats = ({ boatId, ownerId, className }: ReviewStatsProps) =>
     },
   ];
 
+  const formatRating = (rating: number) => rating.toFixed(1);
+  const calculatePercentage = (count: number) => (count / stats.totalReviews) * 100;
+
+  const criteriaLabels = {
+    cleanliness: 'Limpeza',
+    communication: 'Comunicação',
+    accuracy: 'Precisão',
+    value: 'Custo-Benefício',
+  };
+
   return (
-    <div className={className}>
+    <div className={cn('space-y-6', className)}>
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-medium">Estatísticas das Avaliações</h3>
         <Select value={timeframe} onValueChange={(value: any) => setTimeframe(value)}>
@@ -222,6 +234,63 @@ export const ReviewStats = ({ boatId, ownerId, className }: ReviewStatsProps) =>
           </div>
         </CardContent>
       </Card>
+
+      {/* Avaliação Geral */}
+      <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1">
+            <span className="text-4xl font-bold">{formatRating(stats.averageRating)}</span>
+            <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {stats.totalReviews} {stats.totalReviews === 1 ? 'avaliação' : 'avaliações'}
+          </span>
+        </div>
+
+        {/* Distribuição de avaliações */}
+        <div className="flex-1 space-y-2">
+          {[5, 4, 3, 2, 1].map((rating) => {
+            const count = stats.ratingDistribution[rating] || 0;
+            const percentage = calculatePercentage(count);
+            return (
+              <div key={rating} className="flex items-center gap-2">
+                <span className="w-12 text-sm">{rating} estrelas</span>
+                <Progress value={percentage} className="h-2" />
+                <span className="w-12 text-sm text-muted-foreground">
+                  {count}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Médias por critério */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {(Object.entries(stats.criteriaAverages) as [keyof typeof criteriaLabels, number][]).map(
+          ([criterion, rating]) => (
+            <div key={criterion} className="flex items-center justify-between">
+              <span className="text-sm">{criteriaLabels[criterion]}</span>
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <Star
+                      key={value}
+                      className={cn('h-4 w-4', {
+                        'fill-yellow-400 text-yellow-400': value <= Math.round(rating),
+                        'fill-gray-200 text-gray-200': value > Math.round(rating),
+                      })}
+                    />
+                  ))}
+                </div>
+                <span className="w-8 text-sm text-muted-foreground">
+                  {formatRating(rating)}
+                </span>
+              </div>
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }; 

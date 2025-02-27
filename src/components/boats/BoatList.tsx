@@ -4,8 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 import { useEffect } from 'react';
 import { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
+import BoatCard from '@/components/boats/BoatCard';
 
-import { BoatCard } from '@/components/boats/BoatCard';
 import { Button } from '@/components/ui/button';
 import { useBoats } from '@/hooks/useBoats';
 import type { BoatSummary } from '@/types/boat';

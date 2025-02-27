@@ -19,6 +19,7 @@ export default {
           white: "#FFFFFF",
           black: "#000000",
           blue: "#00adef",
+          primary: "#151f5a"
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
